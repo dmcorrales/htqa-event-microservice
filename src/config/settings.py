@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 30
 
+    use_redis: bool = False
+
     api_key: str = "dev-api-key-change-me"
     rate_limit: str = "100/minute"
     log_level: str = "INFO"

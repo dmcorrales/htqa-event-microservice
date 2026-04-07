@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from src.config.settings import settings
+from src.infrastructure.security.auth import create_access_token
 
 
 VALID_PAYLOAD = {
@@ -71,6 +72,32 @@ class TestCreateEventEndpoint:
             "/api/v1/events", json=payload, headers=AUTH_HEADERS
         )
         assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+class TestJWTAuthentication:
+    async def test_valid_jwt_returns_201(self, client):
+        token = create_access_token(subject="test-user")
+        headers = {"Authorization": f"Bearer {token}"}
+        response = await client.post(
+            "/api/v1/events", json=VALID_PAYLOAD, headers=headers
+        )
+        assert response.status_code == 201
+        assert response.json()["status"] == "created"
+
+    async def test_invalid_jwt_returns_401(self, client):
+        headers = {"Authorization": "Bearer invalid.token.value"}
+        response = await client.post(
+            "/api/v1/events", json=VALID_PAYLOAD, headers=headers
+        )
+        assert response.status_code == 401
+
+    async def test_invalid_api_key_returns_401(self, client):
+        headers = {"X-API-Key": "wrong-key"}
+        response = await client.post(
+            "/api/v1/events", json=VALID_PAYLOAD, headers=headers
+        )
+        assert response.status_code == 401
 
 
 @pytest.mark.asyncio
